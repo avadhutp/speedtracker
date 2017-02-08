@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-import requests
+import subprocess
 import sys
 
 
@@ -10,6 +10,7 @@ CEND = '\033[0m'
 UNCHANGED_ENCRYPTION_KEY = 'YOUR_ENCRYPTED_KEY'
 
 URL_ENCRYPTION_KEY = 'https://api.speedtracker.org/encrypt/{key}/'
+WGET_CMD = 'wget --no-verbose --timeout 5 -O - {url}'
 
 
 def version_check():
@@ -17,16 +18,28 @@ def version_check():
 		raise Exception('Must use python 2.7 or greater')
 
 
+def run_cmd(cmd):
+	p = subprocess.Popen(
+			cmd.split(' '), 
+			stdout=subprocess.PIPE,
+			stderr=subprocess.PIPE,
+		)
+
+	out, err = p.communicate()
+	
+	if p.returncode == 0:
+		return out
+
+	raise Exception('Failed making a call to {cmd}: {err}'.format(
+		cmd=cmd,
+		err=err,
+	))
+
+
 def make_call(url):
-	response = requests.get(url)
+	cmd = WGET_CMD.format(url=url)
 
-	if(response.ok):
-		return response.content
-
-	raise Exception('Failed making the call to {url}: {err}'.format(
-			url=url,
-			err=str(response.status_code) + ' ' + response.content,
-		))
+	return run_cmd(cmd)
 
 
 def setup_encryption_key():
@@ -36,6 +49,8 @@ def setup_encryption_key():
 
 	url = URL_ENCRYPTION_KEY.format(key=key)
 	encryption_key = make_call(url)
+
+	print encryption_key
 
 
 def main():
