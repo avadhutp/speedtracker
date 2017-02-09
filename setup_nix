@@ -1,16 +1,19 @@
 #!/usr/bin/env python
 
+import shlex
 import subprocess
 import sys
 
 
 CRED = '\033[91m'
+CGREEN = '\33[32m'
 CEND = '\033[0m'
 
-UNCHANGED_ENCRYPTION_KEY = 'YOUR_ENCRYPTED_KEY'
+ENCRYPTION_KEY_PROP = 'encryptionKey'
 
 URL_ENCRYPTION_KEY = 'https://api.speedtracker.org/encrypt/{key}/'
 WGET_CMD = 'wget --no-verbose --timeout 5 -O - {url}'
+SED_CMD = 'sed -i -r \'/{prop}: (.*)/s/"(.*)"/"{value}"/\' speedtracker.yml'
 
 
 def version_check():
@@ -20,7 +23,7 @@ def version_check():
 
 def run_cmd(cmd):
 	p = subprocess.Popen(
-			cmd.split(' '), 
+			shlex.split(cmd),
 			stdout=subprocess.PIPE,
 			stderr=subprocess.PIPE,
 		)
@@ -33,6 +36,17 @@ def run_cmd(cmd):
 	raise Exception('Failed making a call to {cmd}: {err}'.format(
 		cmd=cmd,
 		err=err,
+	))
+
+
+def success(msg):
+	print CGREEN + '[success] ' + msg + CEND
+
+
+def replace_in_speedtracker_yaml(prop, value):
+	run_cmd(SED_CMD.format(
+		prop=prop,
+		value=value,
 	))
 
 
@@ -49,9 +63,9 @@ def setup_encryption_key():
 
 	url = URL_ENCRYPTION_KEY.format(key=key)
 	encryption_key = make_call(url)
+	replace_in_speedtracker_yaml(ENCRYPTION_KEY_PROP, encryption_key)
 
-	print encryption_key
-
+	success('{prop} updated in speedtracker.yml'.format(prop=ENCRYPTION_KEY_PROP))
 
 def main():
 	print '----Speedtracker setup----'
@@ -59,7 +73,7 @@ def main():
 		version_check()
 		setup_encryption_key()
 	except Exception as e:
-		print CRED + 'Error: {err}'.format(err=str(e)) + CEND
+		print CRED + '[error] {err}'.format(err=str(e)) + CEND
 
 
 if __name__ == '__main__':
