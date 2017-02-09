@@ -60,21 +60,35 @@ def make_call(url):
 	return run_cmd(cmd)
 
 
+def get_input(msg):
+	val = ''
+	while val == '':
+		val = raw_input(msg)
+
+	return val
+
+
 def setup_encryption_key():
-	key = ''
-	while key == '':
-		key = raw_input('Enter your encryption key: ')
+	key = get_input('Enter your encryption key: ')
 
 	url = URL_ENCRYPT.format(key=key, payload='')
 	encryption_key = make_call(url)
 	replace_in_speedtracker_yaml(ENCRYPTION_KEY_PROP, encryption_key)
+
+	global USER_ENCRYPTION_KEY
 	USER_ENCRYPTION_KEY = key
 
 	success('{prop} updated in speedtracker.yml'.format(prop=ENCRYPTION_KEY_PROP))
 
 
 def setup_wpt_key():
-	key= ''
+	wpt_key = get_input('Enter your WebPageTest API key: ')
+
+	url = URL_ENCRYPT.format(key=USER_ENCRYPTION_KEY, payload=wpt_key)
+	encrypted_wpt_key = make_call(url)
+	replace_in_speedtracker_yaml(WPT_KEY_PROP, encrypted_wpt_key)
+
+	success('{prop} updated in speedtracker.yml'. format(prop=WPT_KEY_PROP))
 
 
 def main():
@@ -82,6 +96,7 @@ def main():
 	try:
 		version_check()
 		setup_encryption_key()
+		setup_wpt_key()
 	except Exception as e:
 		print CRED + '[error] {err}'.format(err=str(e)) + CEND
 
