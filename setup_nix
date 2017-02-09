@@ -12,7 +12,7 @@ CEND = '\033[0m'
 ENCRYPTION_KEY_PROP = 'encryptionKey'
 WPT_KEY_PROP = 'wptKey'
 
-URL_ENCRYPT_KEY = 'https://api.speedtracker.org/encrypt/{key}/'
+URL_ENCRYPT = 'https://api.speedtracker.org/encrypt/{key}/{payload}'
 WGET_CMD = 'wget --no-verbose --timeout 5 -O - {url}'
 SED_CMD = 'sed -i -r \'/{prop}: (.*)/s/"(.*)"/"{value}"/\' speedtracker.yml'
 
@@ -65,7 +65,7 @@ def setup_encryption_key():
 	while key == '':
 		key = raw_input('Enter your encryption key: ')
 
-	url = URL_ENCRYPT_KEY.format(key=key)
+	url = URL_ENCRYPT.format(key=key, payload='')
 	encryption_key = make_call(url)
 	replace_in_speedtracker_yaml(ENCRYPTION_KEY_PROP, encryption_key)
 	USER_ENCRYPTION_KEY = key
