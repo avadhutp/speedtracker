@@ -10,7 +10,6 @@ CGREEN = '\33[32m'
 CEND = '\033[0m'
 
 ENCRYPTION_KEY_PROP = 'encryptionKey'
-WPT_KEY_PROP = 'wptKey'
 
 URL_ENCRYPT = 'https://api.speedtracker.org/encrypt/{key}/{payload}'
 WGET_CMD = 'wget --no-verbose --timeout 5 -O - {url}'
@@ -62,7 +61,9 @@ def make_call(url):
 	return run_cmd(cmd)
 
 
-def get_input(msg):
+def get_input(msg, is_mandatory=True):
+	msg += ': ' if (is_mandatory) else ' (press ESC to skip this): '
+
 	val = ''
 	while val == '':
 		val = raw_input(msg)
@@ -71,7 +72,7 @@ def get_input(msg):
 
 
 def setup_encryption_key():
-	key = get_input('Enter your encryption key: ')
+	key = get_input('Enter your encryption key')
 
 	url = URL_ENCRYPT.format(key=key, payload='')
 	encryption_key = make_call(url)
@@ -83,14 +84,30 @@ def setup_encryption_key():
 	success('{prop} updated in speedtracker.yml'.format(prop=ENCRYPTION_KEY_PROP))
 
 
-def setup_wpt_key():
-	wpt_key = get_input('Enter your WebPageTest API key: ')
+def setup_other_speedtracker_props():
+	cfg = {
+		'wptKey': {
+			'name': 'WebPageTest API key',
+			'is_mandatory': True,
+		},
+		# 'wptUrl': {
+		# 	'name': 'WebPageTest server',
+		# 	'is_mandatory': False,
+		# },
+	}
 
-	url = URL_ENCRYPT.format(key=USER_ENCRYPTION_KEY, payload=wpt_key)
-	encrypted_wpt_key = make_call(url)
-	replace_in_speedtracker_yaml(WPT_KEY_PROP, encrypted_wpt_key)
+	for prop, attributes in cfg.iteritems():
+		val = get_input(
+			'Enter {name}: '.format(
+				name=attributes['name'],
+			)
+		)
 
-	success('{prop} updated in speedtracker.yml'. format(prop=WPT_KEY_PROP))
+		url = URL_ENCRYPT.format(key=USER_ENCRYPTION_KEY, payload=val)
+		encrypted_val = make_call(url)
+		replace_in_speedtracker_yaml(prop, encrypted_val)
+
+		success('{prop} updated in speedtracker.yml'. format(prop=prop))
 
 
 def main():
@@ -98,7 +115,7 @@ def main():
 	try:
 		version_check()
 		setup_encryption_key()
-		setup_wpt_key()
+		setup_other_speedtracker_props()
 	except Exception as e:
 		print CRED + '[error] {err}'.format(err=str(e)) + CEND
 
