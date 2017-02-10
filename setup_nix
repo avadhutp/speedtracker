@@ -14,7 +14,7 @@ WPT_KEY_PROP = 'wptKey'
 
 URL_ENCRYPT = 'https://api.speedtracker.org/encrypt/{key}/{payload}'
 WGET_CMD = 'wget --no-verbose --timeout 5 -O - {url}'
-SED_CMD = 'sed -i -r \'/{prop}: (.*)/s/"(.*)"/"{value}"/\' speedtracker.yml'
+SED_CMD = 'sed -E -i.bak \'/{prop}: (.*)/s/"(.*)"/"{value}"/\' speedtracker.yml'
 
 
 USER_ENCRYPTION_KEY = ''
@@ -52,6 +52,8 @@ def replace_in_speedtracker_yaml(prop, value):
 		prop=prop,
 		value=value,
 	))
+
+	run_cmd('rm speedtracker.yml.bak')
 
 
 def make_call(url):
